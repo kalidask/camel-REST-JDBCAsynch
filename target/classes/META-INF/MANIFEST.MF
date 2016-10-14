@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1476446853008
+Build-Jdk: 1.8.0_66
+Built-By: root
+Bundle-Blueprint: OSGI-INF/blueprint/blueprint.xml
+Bundle-Description: Camel Content-Based Router Example
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.html
+Bundle-ManifestVersion: 2
+Bundle-Name: Camel Content-Based Router Example [RestAsync_Process]
+Bundle-SymbolicName: RestAsync_Process
+Bundle-Version: 1.0.0.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Export-Package: com.eai.rs.helloworld;uses:="javax.ws.rs,org.apache.came
+ l";version="1.0.0"
+Export-Service: javax.sql.DataSource;osgi.jndi.service.name=jdbc/dataSou
+ rce
+Import-Package: javax.sql,javax.ws.rs;version="[2.0,3)",org.apache.camel
+ ;version="[2.15,3)",org.apache.commons.dbcp,org.osgi.service.blueprint;
+ version="[1.0.0,2.0.0)"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.7))"
+Tool: Bnd-3.2.0.201605172007

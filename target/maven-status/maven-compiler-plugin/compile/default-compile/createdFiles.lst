@@ -1,0 +1,4 @@
+com/eai/rs/helloworld/HelloWorldImpl.class
+com/eai/rs/helloworld/HelloWorldResponseTransformer.class
+com/eai/rs/helloworld/HelloWorldRequest.class
+com/eai/rs/helloworld/HelloWorldResponse.class

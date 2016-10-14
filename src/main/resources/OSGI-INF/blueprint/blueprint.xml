@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+    xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+    xmlns:cxf="http://camel.apache.org/schema/blueprint/cxf"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd        http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint.xsd   http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JDBC Datasource ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <bean class="org.apache.commons.dbcp.BasicDataSource" id="dataSource">
+        <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
+        <property name="url" value="jdbc:oracle:thin:@104.41.144.165:7070:xe"/>
+        <property name="username" value="mfdemouser"/>
+        <property name="password" value="m_m$#83843"/>
+    </bean>
+    <service id="dataSource-service" interface="javax.sql.DataSource" ref="dataSource">
+        <service-properties>
+            <entry key="osgi.jndi.service.name" value="jdbc/dataSource"/>
+        </service-properties>
+    </service>
+    <!--  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Bean Declaration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <bean class="com.eai.rs.helloworld.HelloWorldResponseTransformer" id="HelloWorldResponseTransformer"/>
+    <bean class="com.eai.rs.helloworld.HelloWorldImpl" id="serviceClass"/>
+    <!--  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Rest Service ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <cxf:rsServer address="http://localhost:9090/getHelloWorld" id="endpoint">
+        <cxf:serviceBeans>
+            <ref component-id="serviceClass"/>
+        </cxf:serviceBeans>
+    </cxf:rsServer>
+    <camelContext id="cbr-example-context"
+        xmlns="http://camel.apache.org/schema/blueprint" xmlns:order="http://fabric8.com/examples/order/v7">
+        <route id="CXFRest_route1">
+            <from id="_from1" uri="cxfrs:bean:endpoint"/>
+            <bean id="_bean2" method="getAssets" ref="HelloWorldResponseTransformer"/>
+            <marshal id="_marshal1">
+                <json library="Jackson" prettyPrint="true"/>
+            </marshal>
+            <to id="_to1" uri="direct:DBInsert"/>
+        </route>
+        <route id="DBInsert_route2">
+            <from id="_from2" uri="direct:DBInsert"/>
+            <to id="_to2" uri="sql:insert into loan_lead_status(reqid,agent,status) values(013,'testK2','open')?dataSource=#dataSource"/>
+            <log id="_log3" message="DB Insertion done successfully, the message is ${body}"/>
+            <transform id="_transform1">
+                <constant>OK</constant>
+            </transform>
+        </route>
+    </camelContext>
+</blueprint>
