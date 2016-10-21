@@ -19,7 +19,7 @@
     <bean class="com.eai.rs.helloworld.HelloWorldResponseTransformer" id="HelloWorldResponseTransformer"/>
     <bean class="com.eai.rs.helloworld.HelloWorldImpl" id="serviceClass"/>
     <!--  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Rest Service ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <cxf:rsServer address="http://localhost:9090/getHelloWorld" id="endpoint">
+    <cxf:rsServer address="http://localhost:9091/getHelloWorld" id="endpoint">
         <cxf:serviceBeans>
             <ref component-id="serviceClass"/>
         </cxf:serviceBeans>
@@ -36,11 +36,25 @@
         </route>
         <route id="DBInsert_route2">
             <from id="_from2" uri="direct:DBInsert"/>
-            <to id="_to2" uri="sql:insert into loan_lead_status(reqid,agent,status) values(013,'testK2','open')?dataSource=#dataSource"/>
-            <log id="_log3" message="DB Insertion done successfully, the message is ${body}"/>
-            <transform id="_transform1">
-                <constant>OK</constant>
-            </transform>
+            <to id="_to2" uri="sql:insert into loan_lead_status(reqid,agent,status) values(013,testK2,'open')?dataSource=#dataSource"/>
+            <doTry id="_doTry1">
+                <log id="_log3" message="DB Insertion done successfully, the message is ${body}"/>
+                <transform id="_transform1">
+                    <constant>OK</constant>
+                </transform>
+                <doCatch id="_doCatch1">
+                    <exception>java.lang.Exception</exception>
+                    <exception>java.sql.SQLException</exception>  
+                    <exception>java.sql.SQLSyntaxErrorException</exception>  
+                    <onWhen>
+                       <simple>${exception.message} contains 'ORA-00984'</simple>
+                    </onWhen>
+                    <transform id="_transform2">
+                        <constant>ERROR</constant>
+                    </transform>
+                    <log id="_log3" message="DB Insertion Failed"/>
+                </doCatch>
+            </doTry>
         </route>
     </camelContext>
 </blueprint>
