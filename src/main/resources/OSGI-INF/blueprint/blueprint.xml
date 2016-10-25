@@ -5,10 +5,10 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd        http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint.xsd   http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JDBC Datasource ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <bean class="org.apache.commons.dbcp.BasicDataSource" id="dataSource">
-        <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
-        <property name="url" value="jdbc:oracle:thin:@104.41.144.165:7070:xe"/>
-        <property name="username" value="mfdemouser"/>
-        <property name="password" value="m_m$#83843"/>
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/loanstatus"/>
+        <property name="username" value="root"/>
+        <property name="password" value="redhat"/>
     </bean>
     <service id="dataSource-service" interface="javax.sql.DataSource" ref="dataSource">
         <service-properties>
@@ -47,10 +47,10 @@
                     <exception>java.lang.Exception</exception>
                     <exception>java.sql.SQLException</exception>
                     <exception>java.sql.SQLSyntaxErrorException</exception>
-                    <onWhen>
+<!--                     <onWhen>
                         <simple>${exception.message} contains 'ORA-00984'</simple>
                     </onWhen>
-                    <transform id="_transform2">
+ -->                    <transform id="_transform2">
                         <constant>ERROR</constant>
                     </transform>
                     <log id="_log3" message="DB Insertion Failed"/>
