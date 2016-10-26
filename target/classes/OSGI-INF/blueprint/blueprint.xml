@@ -5,10 +5,10 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd        http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint.xsd   http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JDBC Datasource ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <bean class="org.apache.commons.dbcp.BasicDataSource" id="dataSource">
-        <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
-        <property name="url" value="jdbc:oracle:thin:@104.41.144.165:7070:xe"/>
-        <property name="username" value="mfdemouser"/>
-        <property name="password" value="m_m$#83843"/>
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/loanstatus"/>
+        <property name="username" value="root"/>
+        <property name="password" value="redhat"/>
     </bean>
     <service id="dataSource-service" interface="javax.sql.DataSource" ref="dataSource">
         <service-properties>
@@ -24,6 +24,12 @@
             <ref component-id="serviceClass"/>
         </cxf:serviceBeans>
     </cxf:rsServer>
+    <!--  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ActiveMQ Component ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <bean class="org.apache.activemq.camel.component.ActiveMQComponent" id="activemq">
+        <property name="brokerURL" value="tcp://localhost:61616?jms.useAsyncSend=true"/>
+        <property name="userName" value="admin"/>
+        <property name="password" value="admin"/>
+    </bean>
     <camelContext id="cbr-example-context"
         xmlns="http://camel.apache.org/schema/blueprint" xmlns:order="http://fabric8.com/examples/order/v7">
         <route id="CXFRest_route1">
@@ -36,25 +42,47 @@
         </route>
         <route id="DBInsert_route2">
             <from id="_from2" uri="direct:DBInsert"/>
-            <to id="_to2" uri="sql:insert into loan_lead_status(reqid,agent,status) values(013,testK2,'open')?dataSource=#dataSource"/>
             <doTry id="_doTry1">
+                <to id="_to2" uri="sql:insert into loan_lead_status(reqid,agent,status) values(013,'testK2','open')?dataSource=#dataSource"/>
                 <log id="_log3" message="DB Insertion done successfully, the message is ${body}"/>
+                 <removeHeaders id="_removeHeaders1" pattern="CamelHttp*"/>
                 <transform id="_transform1">
                     <constant>OK</constant>
                 </transform>
+                <setHeader headerName="OK">
+                       <simple>OK</simple>
+                    </setHeader>
                 <doCatch id="_doCatch1">
                     <exception>java.lang.Exception</exception>
-                    <exception>java.sql.SQLException</exception>  
-                    <exception>java.sql.SQLSyntaxErrorException</exception>  
-                    <onWhen>
-                       <simple>${exception.message} contains 'ORA-00984'</simple>
+                    <exception>java.sql.SQLException</exception>
+                    <exception>java.sql.SQLSyntaxErrorException</exception>
+                    <!--                     <onWhen>
+                        <simple>${exception.message} contains 'ORA-00984'</simple>
                     </onWhen>
+ -->
+                    <log id="_log1" message="amq body is: ${body}"/>
                     <transform id="_transform2">
                         <constant>ERROR</constant>
                     </transform>
-                    <log id="_log3" message="DB Insertion Failed"/>
+                    <setHeader headerName="ERROR">
+                       <simple>ERROR</simple>
+                    </setHeader>
+                    <log id="_log3" message="DB Insertion Failed>..............${header.ERROR}"/>
+                    <o uri="direct:timer" />
+                    <!--    <to id="_to4" uri="direct:activemqtimer"/> -->
                 </doCatch>
             </doTry>
+        </route>
+        <route id="activemqtimer">
+            <from id="_from3" uri="timer:foo?repeatCount=5&amp;delay=30000"/>
+                                <log id="_log4" message="body in amq::::: ${header.ERROR}"/>
+            
+            <setBody id="_setBody1">
+                <constant>insert into loan_lead_status(reqid,agent,status) values(013,'testK2','open')</constant>
+            </setBody>
+            <to id="_to4" uri="jdbc:dataSource"/>
+            <to id="_to3" pattern="InOnly" uri="activemq:queue:retry"/>
+            <log id="_log2" message="queue started"/>
         </route>
     </camelContext>
 </blueprint>
